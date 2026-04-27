@@ -2,8 +2,14 @@
 {
     public class OutbreakDto
     {
-        public string DiseaseName { get; set; }
-        public string FacilityName { get; set; }
+        public string DiseaseName { get; set; } = "";
+        public string FacilityName { get; set; } = "";
         public int Count { get; set; }
     }
+    //public class OutbreakDto
+    //{
+    //    public string DiseaseName { get; set; }
+    //    public string FacilityName { get; set; }
+    //    public int Count { get; set; }
+    //}
 }

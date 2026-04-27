@@ -24,6 +24,284 @@
 
         <h4>Enter Case Details (@uphcName)</h4>
 
+        <div class="mb-3">
+            <label>Patient Name</label>
+            <InputText @bind-Value="caseRecord.PatientName" class="form-control" />
+            <ValidationMessage For="@(() => caseRecord.PatientName)" />
+        </div>
+
+        <div class="mb-3">
+            <label>Phone Number</label>
+            <InputText @bind-Value="caseRecord.Phone" class="form-control" />
+            <ValidationMessage For="@(() => caseRecord.Phone)" />
+        </div>
+
+        <div class="mb-3">
+            <label>Date when symptoms started</label>
+            <InputDate @bind-Value="caseRecord.OnsetDate"
+                       class="form-control"
+                       max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            <ValidationMessage For="@(() => caseRecord.OnsetDate)" />
+        </div>
+
+        <div class="mb-3">
+            <label>Date of Patient Visit</label>
+            <InputDate @bind-Value="caseRecord.DateReported"
+                       class="form-control"
+                       max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+            <ValidationMessage For="@(() => caseRecord.DateReported)" />
+        </div>
+
+        <div class="mb-3">
+            <label>Symptoms</label>
+            <InputTextArea @bind-Value="caseRecord.Symptoms"
+                           class="form-control"
+                           rows="3" />
+            <ValidationMessage For="@(() => caseRecord.Symptoms)" />
+        </div>
+
+        <div class="mb-3">
+            <label>Disease</label>
+            <InputSelect @bind-Value="selectedDisease" class="form-control">
+                <option value="">-- Select Disease --</option>
+
+                @foreach (var d in outbreakDiseases)
+                {
+                    <option value="@d">@d</option>
+                }
+
+                <option value="Other">Other</option>
+            </InputSelect>
+        </div>
+
+        @if (selectedDisease == "Other")
+        {
+            <div class="mb-3">
+                <label>Enter Disease Name</label>
+                <InputText @bind-Value="caseRecord.DiseaseName"
+                           class="form-control" />
+            </div>
+        }
+
+        <div class="mb-3">
+            <label>Address</label>
+            <InputTextArea @bind-Value="caseRecord.AddressOfPatient"
+                           class="form-control"
+                           rows="2" />
+            <ValidationMessage For="@(() => caseRecord.AddressOfPatient)" />
+        </div>
+
+        <button type="submit" class="btn btn-success btn-lg" disabled="@isSaving">
+            @(isSaving ? "Saving..." : "Save Case Record")
+        </button>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="alert @(success ? "alert-success" : "alert-danger") mt-3">
+            @message
+        </div>
+    }
+</div>
+
+@code {
+    CaseRecord caseRecord = new();
+    string message = "";
+    bool success = false;
+    bool isSaving = false;
+    string uphcName = "";
+    string selectedDisease = "";
+
+    List<string> outbreakDiseases = new()
+    {
+        "Dengue","Malaria","Chikungunya","Zika Virus Disease","COVID-19",
+        "Influenza (ILI/SARI)","Tuberculosis","Measles","Rubella",
+        "Varicella (Chickenpox)","Mumps","Diphtheria",
+        "Pertussis (Whooping Cough)","Acute Flaccid Paralysis (Polio)",
+        "Meningitis","AES/JE","Cholera","ADD","Typhoid",
+        "Hepatitis A & E","Hepatitis B","Hepatitis C","Leptospirosis",
+        "Scrub Typhus","Rabies","Tetanus","Plague","Anthrax","Brucellosis",
+        "Kala-azar","Filariasis","Leprosy","HIV/AIDS","HFMD"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        var appUser = await UserManager.GetUserAsync(user);
+
+        if (appUser?.FacilityId != null)
+        {
+            using var db = DbFactory.CreateDbContext();
+            var facility = await db.Facilities.FindAsync(appUser.FacilityId.Value);
+            uphcName = facility?.FacilityName ?? "Unknown Facility"; // ✅ FIXED
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        if (isSaving) return;
+
+        isSaving = true;
+
+        try
+        {
+            using var db = DbFactory.CreateDbContext();
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var appUser = await UserManager.GetUserAsync(user);
+
+            if (appUser == null || appUser.FacilityId == null)
+            {
+                message = "User or Facility not found!";
+                success = false;
+                return;
+            }
+
+            // Disease handling
+            if (string.IsNullOrWhiteSpace(selectedDisease))
+            {
+                message = "Please select a disease!";
+                success = false;
+                return;
+            }
+
+            caseRecord.DiseaseName = selectedDisease == "Other"
+                ? caseRecord.DiseaseName
+                : selectedDisease;
+
+            // Auto-set communicable
+            caseRecord.IsCommunicable = IsOutbreakDisease(caseRecord.DiseaseName);
+
+            // Date validation
+            if (caseRecord.OnsetDate > DateTime.Today ||
+    caseRecord.DateReported > DateTime.Today ||
+    caseRecord.OnsetDate > caseRecord.DateReported)
+            {
+                message = "Invalid dates!";
+                success = false;
+                return;
+            }
+            // if (caseRecord.OnsetDate > DateTime.Today ||
+            //     !caseRecord.DateReported.HasValue ||
+            //     caseRecord.DateReported > DateTime.Today ||
+            //     caseRecord.OnsetDate > caseRecord.DateReported.Value)
+            // {
+            //     message = "Invalid dates!";
+            //     success = false;
+            //     return;
+            // }
+
+            // Assign system values
+            caseRecord.FacilityId = appUser.FacilityId.Value;
+            caseRecord.UserId = appUser.Id;
+            caseRecord.CreatedDate = DateTime.UtcNow; // ✅ FIXED
+            caseRecord.Status = CaseStatus.Suspected;
+
+            db.CaseRecords.Add(caseRecord);
+            await db.SaveChangesAsync();
+
+            // 🔔 Notifications
+            if (caseRecord.IsCommunicable)
+            {
+                await NotifService.SendNotification(
+                    caseRecord.Id,
+                    NotificationType.NewCase   // ✅ FIXED ENUM
+                );
+
+                message = $"Case saved. ALERT sent for {caseRecord.DiseaseName}!";
+            }
+            else
+            {
+                message = "Case saved successfully.";
+            }
+
+            await NotifService.NotifyDashboardUpdate();
+
+            success = true;
+
+            caseRecord = new CaseRecord();
+            selectedDisease = "";
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+            success = false;
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private bool IsOutbreakDisease(string disease)
+    {
+        return outbreakDiseases
+            .Any(d => d.Equals(disease, StringComparison.OrdinalIgnoreCase));
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@*  @page "/patient-entry"
+@attribute [Authorize(Roles = "UPHCUser,CHCUser,UHWCuser")]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using UPHC.SurveillanceDashboard.Data
+@using UPHC.SurveillanceDashboard.Services
+@using UPHC.SurveillanceDashboard.Models
+
+@inject NotificationService NotifService
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject UserManager<ApplicationUser> UserManager
+
+<PageTitle>Case Entry</PageTitle>
+
+<div class="container mt-4">
+    <EditForm Model="caseRecord" OnValidSubmit="HandleSave" class="card p-4">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <h4>Enter Case Details (@uphcName)</h4>
+
         <!-- Patient Name -->
         <div class="mb-3">
             <label>Patient Name</label>
@@ -235,7 +513,7 @@
 
             await NotifService.NotifyDashboardUpdate();
 
-            if (IsOutbreakDisease(caseRecord.DiseaseName))
+            if (IsOutbreakDisease(caseRecord.DiseaseName))    //This method checks whether the disease is communicable or not
             {
                 await NotifService.SendNotification(caseRecord.Id, "Suspected");
                 message = $"Case saved. ALERT sent for {caseRecord.DiseaseName}!";
@@ -264,11 +542,11 @@
             .Any(d => d.Equals(disease, StringComparison.OrdinalIgnoreCase));
     }
 }
+ *@
 
 
 
-
-
+ 
 
 
 
