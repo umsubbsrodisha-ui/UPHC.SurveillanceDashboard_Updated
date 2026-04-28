@@ -3,6 +3,383 @@
 
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+
+@using UPHC.SurveillanceDashboard.Data
+@using UPHC.SurveillanceDashboard.Models
+@using Microsoft.AspNetCore.SignalR.Client
+
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<div class="container-fluid dashboard-container">
+
+    <h4 class="mb-4 fw-bold">🧬 Surveillance Dashboard</h4>
+
+    <!-- TOP SUMMARY -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="glass-card gradient-blue text-white">
+                <h6>Total Cases (14 days)</h6>
+                <h1>@totalPatients</h1>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="glass-card gradient-red text-white">
+                <h6>Confirmed Outbreaks</h6>
+                <h1>@outbreaks.Count</h1>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="glass-card gradient-orange text-white">
+                <h6>Suspected Clusters</h6>
+                <h1>@suspectedClusters.Count</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- TREND -->
+    <div class="glass-card mb-4">
+        <h5>📈 Case Trend (Last 14 Days)</h5>
+        <canvas id="trendChart"></canvas>
+    </div>
+
+    <!-- PIE -->
+    <div class="glass-card mb-4">
+        <h5>🦠 Disease Distribution</h5>
+        <canvas id="diseasePieChart"></canvas>
+    </div>
+
+    <!-- BAR -->
+    <div class="glass-card mb-4">
+        <h5>🏥 Facility Case Load</h5>
+        <canvas id="facilityBarChart"></canvas>
+    </div>
+
+    <!-- OUTBREAKS -->
+    <div class="glass-card mb-4">
+        <h5 class="text-danger">🚨 Confirmed Outbreaks</h5>
+
+        @if (outbreaks.Count == 0)
+        {
+            <p>No outbreaks detected</p>
+        }
+        else
+        {
+            @foreach (var o in outbreaks)
+            {
+                var key = $"{o.DiseaseName}-{o.FacilityName}-{o.FirstCaseDate:yyyyMMdd}";
+                <div class="mini-card red @(newOutbreakKeys.Contains(key) ? "flash-alert" : "")">
+                    <strong>@o.DiseaseName</strong><br />
+                    <small>@o.FacilityName</small><br />
+                    <span>@o.Count cases</span>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- SUSPECTED -->
+    <div class="glass-card mb-4">
+        <h5 class="text-warning">🟠 Suspected Clusters</h5>
+
+        @if (suspectedClusters.Count == 0)
+        {
+            <p>No clusters</p>
+        }
+        else
+        {
+            @foreach (var s in suspectedClusters)
+            {
+                var key = $"{s.DiseaseName}-{s.FacilityName}-{s.FirstCaseDate:yyyyMMdd}";
+                <div class="mini-card orange @(newSuspectedKeys.Contains(key) ? "flash-alert" : "")">
+                    <strong>@s.DiseaseName</strong><br />
+                    <small>@s.FacilityName</small><br />
+                    <span>@s.Count cases</span>
+                </div>
+            }
+        }
+    </div>
+
+    <!-- FACILITY CARDS -->
+    <div class="row g-3">
+        @foreach (var f in facilityStats)
+        {
+            <div class="col-md-3">
+                <div class="glass-card"
+                     @onclick="() => GoToFacility(f.Id)">
+                    <h6>@f.Name</h6>
+                    <h2>@f.TotalCases</h2>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+@code {
+
+    HubConnection? hubConnection;
+
+    int totalPatients;
+    List<OutbreakDto> outbreaks = new();
+    List<OutbreakDto> suspectedClusters = new();
+    List<FacilityStat> facilityStats = new();
+
+    List<string> trendLabels = new();
+    List<int> confirmedData = new();
+    List<int> suspectedData = new();
+
+    List<string> diseaseLabels = new();
+    List<int> diseaseCounts = new();
+
+    List<string> facilityLabels = new();
+    List<int> facilityData = new();
+
+    //For smart flashes for most recent outbreaks
+
+    HashSet<string> previousOutbreakKeys = new();
+    HashSet<string> previousSuspectedKeys = new();
+
+    HashSet<string> newOutbreakKeys = new();
+    HashSet<string> newSuspectedKeys = new();
+
+    bool isFirstLoad = true;  // Flashes should be off in first load
+
+
+
+    async Task LoadDashboardData()
+    {
+        using var db = DbFactory.CreateDbContext();
+        DateTime fromDate = DateTime.Today.AddDays(-14);
+
+        totalPatients = await db.CaseRecords
+            .Where(c => c.CreatedDate >= fromDate && c.IsCommunicable)
+            .CountAsync();
+
+        outbreaks = await db.CaseRecords
+            .Include(c => c.Facility)
+            .Where(c => c.CreatedDate >= fromDate &&
+                        c.IsCommunicable &&
+                        c.Status == CaseStatus.Confirmed)
+            .GroupBy(c => new { c.DiseaseName, c.Facility.FacilityName })
+            .Select(g => new OutbreakDto
+            {
+                DiseaseName = g.Key.DiseaseName,
+                FacilityName = g.Key.FacilityName,
+                Count = g.Count(),
+                FirstCaseDate = g.Min(x => x.CreatedDate)
+            })
+            .Where(x => x.Count >= 3)
+            .ToListAsync();
+
+        suspectedClusters = await db.CaseRecords
+            .Include(c => c.Facility)
+            .Where(c => c.CreatedDate >= fromDate &&
+                        c.IsCommunicable &&
+                        c.Status == CaseStatus.Suspected)
+            .GroupBy(c => new { c.DiseaseName, c.Facility.FacilityName })
+            .Select(g => new OutbreakDto
+            {
+                DiseaseName = g.Key.DiseaseName,
+                FacilityName = g.Key.FacilityName,
+                Count = g.Count(),
+                FirstCaseDate = g.Min(x => x.CreatedDate)
+            })
+            .Where(x => x.Count >= 5)
+            .ToListAsync();
+
+        facilityStats = await db.Facilities
+            .Select(f => new FacilityStat
+            {
+                Id = f.Id,
+                Name = f.FacilityName,
+                TotalCases = f.CaseRecords.Count(c => c.IsCommunicable)
+            })
+            .ToListAsync();
+
+        var trendData = await db.CaseRecords
+            .Where(c => c.CreatedDate >= fromDate && c.IsCommunicable)
+            .GroupBy(c => c.CreatedDate.Date)
+            .Select(g => new
+            {
+                Date = g.Key,
+                Confirmed = g.Count(x => x.Status == CaseStatus.Confirmed),
+                Suspected = g.Count(x => x.Status == CaseStatus.Suspected)
+            })
+            .ToListAsync();
+
+        trendLabels.Clear();
+        confirmedData.Clear();
+        suspectedData.Clear();
+
+        for (int i = 0; i < 14; i++)
+        {
+            var date = fromDate.AddDays(i).Date;
+            var day = trendData.FirstOrDefault(x => x.Date == date);
+
+            trendLabels.Add(date.ToString("dd MMM"));
+            confirmedData.Add(day?.Confirmed ?? 0);
+            suspectedData.Add(day?.Suspected ?? 0);
+        }
+
+        var diseaseData = await db.CaseRecords
+            .Where(c => c.CreatedDate >= fromDate && c.IsCommunicable)
+            .GroupBy(c => c.DiseaseName)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .Take(6)
+            .ToListAsync();
+
+        diseaseLabels = diseaseData.Select(x => x.Key).ToList();
+        diseaseCounts = diseaseData.Select(x => x.Count).ToList();
+
+        var facilityChart = await db.Facilities
+            .Select(f => new
+            {
+                f.FacilityName,
+                Count = f.CaseRecords
+                    .Where(c => c.CreatedDate >= fromDate && c.IsCommunicable)
+                    .Count()
+            })
+            .OrderByDescending(x => x.Count)
+            .Take(8)
+            .ToListAsync();
+
+        facilityLabels = facilityChart.Select(x => x.FacilityName).ToList();
+        facilityData = facilityChart.Select(x => x.Count).ToList();
+
+
+        //For dynamic smart flashes for most recent outbreak cases
+
+        // Create keys for current data
+        var currentOutbreakKeys = outbreaks
+            .Select(o => $"{o.DiseaseName}-{o.FacilityName}-{o.FirstCaseDate:yyyyMMdd}")
+            .ToHashSet();
+
+        var currentSuspectedKeys = suspectedClusters
+            .Select(s => $"{s.DiseaseName}-{s.FacilityName}-{s.FirstCaseDate:yyyyMMdd}")
+            .ToHashSet();
+
+        // Detect NEW ones
+        newOutbreakKeys = currentOutbreakKeys
+            .Except(previousOutbreakKeys)
+            .ToHashSet();
+
+        newSuspectedKeys = currentSuspectedKeys
+            .Except(previousSuspectedKeys)
+            .ToHashSet();
+
+        if (isFirstLoad)
+        {
+            newOutbreakKeys.Clear();
+            newSuspectedKeys.Clear();
+            isFirstLoad = false;
+        }
+
+        // Update previous sets
+        previousOutbreakKeys = currentOutbreakKeys;
+        previousSuspectedKeys = currentSuspectedKeys;
+    }
+
+    async Task RenderCharts()
+    {
+        await JSRuntime.InvokeVoidAsync("renderTrendChart",
+            trendLabels, confirmedData, suspectedData);
+
+        await JSRuntime.InvokeVoidAsync("renderDiseasePieChart",
+            diseaseLabels, diseaseCounts);
+
+        await JSRuntime.InvokeVoidAsync("renderUPHCBarChart",
+            facilityLabels, facilityData);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RenderCharts();
+
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.ToAbsoluteUri("/notificationHub"))
+                .WithAutomaticReconnect()
+                .Build();
+
+            hubConnection.On("DashboardUpdated", async () =>
+            {
+                await LoadDashboardData();
+
+                await InvokeAsync(async () =>
+                {
+                    await RenderCharts();
+                    StateHasChanged();
+                });
+            });
+
+            await hubConnection.StartAsync();
+            await hubConnection.SendAsync("JoinDashboardGroup");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.DisposeAsync();   // Disposing connection 
+        }
+    }
+
+    void GoToFacility(int id)
+    {
+        Navigation.NavigateTo($"/facility/{id}");
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@* @page "/dashboard"
+@attribute [Authorize]
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
 @using UPHC.SurveillanceDashboard.Data
 @using UPHC.SurveillanceDashboard.Models
 @using Microsoft.AspNetCore.SignalR.Client
@@ -287,15 +664,7 @@
         Navigation.NavigateTo($"/facility/{id}");
     }
 }
-
-
-
-
-
-
-
-
-
+*@
 
 
 

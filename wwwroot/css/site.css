@@ -1,6 +1,4 @@
-﻿
-
-/* Blinking notification dot */
+﻿/* 🔴 Blinking notification dot */
 .animate-blink {
     animation: blink 1s infinite;
 }
@@ -19,14 +17,247 @@
     }
 }
 
-/*  Dropdown styling */
+/* 🔽 Dropdown */
 .dropdown-menu {
     box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     border-radius: 10px;
 }
 
-/* Profile image hover */
+/* 👤 Profile image hover */
 img.rounded-circle:hover {
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
+/* 📊 General UI */
+body {
+    font-size: 1.2rem;
+}
+
+h1, h2, h3 {
+    font-weight: bold;
+}
+
+table {
+    font-size: 1.1rem;
+}
+
+.card {
+    border-radius: 15px;
+}
+
+/* 🏥 Facility / UPHC cards */
+.uphc-card {
+    cursor: pointer;
+    transition: 0.2s;
+    border-radius: 15px;
+    text-align: center;
+}
+
+    .uphc-card:hover {
+        transform: scale(1.05);
+        background-color: #f1f5f9;
+    }
+
+/* 🌈 Dashboard background */
+.dashboard-container {
+    background: linear-gradient(135deg, #eef2ff, #f8fafc);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* 🧊 Glass card */
+.glass-card {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    transition: 0.3s;
+    animation: fadeInUp 0.5s ease;
+}
+
+    .glass-card:hover {
+        transform: translateY(-5px);
+    }
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 🎨 Gradients */
+.gradient-blue {
+    background: linear-gradient(135deg, #4f46e5, #3b82f6);
+}
+
+.gradient-red {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.gradient-orange {
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+}
+
+/* 📦 Mini cards */
+.mini-card {
+    border-radius: 12px;
+    padding: 15px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+    .mini-card.red {
+        border-left: 5px solid #dc2626;
+    }
+
+    .mini-card.orange {
+        border-left: 5px solid #f59e0b;
+    }
+
+/* 📈 Trend Chart */
+#trendChart {
+    width: 100% !important;
+    height: 300px !important;
+}
+
+@media (min-width: 1400px) {
+    #trendChart {
+        height: 450px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    #trendChart {
+        height: 250px !important;
+    }
+}
+
+/* 🥧 Pie Chart */
+#diseasePieChart {
+    width: 100% !important;
+    height: 300px !important;
+}
+
+@media (min-width: 1400px) {
+    #diseasePieChart {
+        height: 420px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    #diseasePieChart {
+        height: 260px !important;
+    }
+}
+
+/* 📊 Facility Bar Chart (FIXED) */
+#facilityBarChart {
+    width: 100% !important;
+    height: 350px !important;
+}
+
+@media (min-width: 1400px) {
+    #facilityBarChart {
+        height: 500px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    #facilityBarChart {
+        height: 280px !important;
+    }
+}
+
+
+
+.flash-alert {
+    animation: flash 1s ease 3;
+}
+
+@keyframes flash {
+    0% {
+        background-color: #ffe5e5;
+    }
+
+    50% {
+        background-color: #ffcccc;
+    }
+
+    100% {
+        background-color: white;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Blinking notification dot */
+/*.animate-blink {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}*/
+
+/*  Dropdown styling */
+/*.dropdown-menu {
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    border-radius: 10px;
+}*/
+
+/* Profile image hover */
+/*img.rounded-circle:hover {
     transform: scale(1.05);
     transition: 0.2s;
 }
@@ -56,17 +287,17 @@ body {
 
 h1, h2, h3 {
     font-weight: bold;
-}
+}*/
 
 /*  Background */
-.dashboard-container {
+/*.dashboard-container {
     background: linear-gradient(135deg, #eef2ff, #f8fafc);
     min-height: 100vh;
     padding: 20px;
-}
+}*/
 
 /*  Glass card */
-.glass-card {
+/*.glass-card {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
     border-radius: 16px;
@@ -77,10 +308,10 @@ h1, h2, h3 {
 
     .glass-card:hover {
         transform: translateY(-5px);
-    }
+    }*/
 
 /*  Gradients */
-.gradient-blue {
+/*.gradient-blue {
     background: linear-gradient(135deg, #4f46e5, #3b82f6);
 }
 
@@ -90,10 +321,10 @@ h1, h2, h3 {
 
 .gradient-orange {
     background: linear-gradient(135deg, #f59e0b, #f97316);
-}
+}*/
 
 /*  Mini cards */
-.mini-card {
+/*.mini-card {
     border-radius: 12px;
     padding: 15px;
     background: white;
@@ -106,86 +337,86 @@ h1, h2, h3 {
 
     .mini-card.orange {
         border-left: 5px solid #f59e0b;
-    }
+    }*/
 
 /*  UPHC */
-.uphc-card {
+/*.uphc-card {
     cursor: pointer;
     text-align: center;
 }
 
     .uphc-card:hover {
         background: #f1f5f9;
-    }
+    }*/
 
 
 /* Trend Chart Special Styling */
-.trend-card {
+/*.trend-card {
     padding: 25px;
     border-radius: 20px;
-}
+}*/
 
 /* Make chart responsive for ALL screens */
-#trendChart {
+/*#trendChart {
     width: 100% !important;
     height: 300px !important;
-}
+}*/
 
 /* Large screens (TV / Big monitors) */
-@media (min-width: 1400px) {
+/*@media (min-width: 1400px) {
     #trendChart {
         height: 450px !important;
     }
-}
+}*/
 
 /* Mobile */
-@media (max-width: 576px) {
+/*@media (max-width: 576px) {
     #trendChart {
         height: 250px !important;
     }
-}
+}*/
 
 
 
 
 /*  Pie Chart */
-#diseasePieChart {
+/*#diseasePieChart {
     width: 100% !important;
     height: 300px !important;
-}
+}*/
 
 /*  Large screens */
-@media (min-width: 1400px) {
+/*@media (min-width: 1400px) {
     #diseasePieChart {
         height: 420px !important;
     }
-}
+}*/
 
 /*  Mobile */
-@media (max-width: 576px) {
+/*@media (max-width: 576px) {
     #diseasePieChart {
         height: 260px !important;
     }
-}
+}*/
 
 
 
 /*  UPHC Bar Chart */
-#uphcBarChart {
+/*#uphcBarChart {
     width: 100% !important;
     height: 350px !important;
-}
+}*/
 
 /*  Large screens */
-@media (min-width: 1400px) {
+/*@media (min-width: 1400px) {
     #uphcBarChart {
         height: 500px !important;
     }
-}
+}*/
 
 /*  Mobile */
-@media (max-width: 576px) {
+/*@media (max-width: 576px) {
     #uphcBarChart {
         height: 280px !important;
     }
-}
+}*/

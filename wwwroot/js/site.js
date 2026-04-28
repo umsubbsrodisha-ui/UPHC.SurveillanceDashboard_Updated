@@ -326,7 +326,7 @@ window.renderDiseasePieChart = (labels, data) => {
 let uphcBarChartInstance = null;
 window.renderUPHCBarChart = (labels, data) => {
 
-    const canvas = document.getElementById('uphcBarChart');
+    const canvas = document.getElementById('facilityBarChart');
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
