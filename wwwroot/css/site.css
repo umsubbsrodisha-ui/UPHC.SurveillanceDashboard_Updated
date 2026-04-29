@@ -179,7 +179,8 @@ table {
 
 
 .flash-alert {
-    animation: flash 1s ease 3;
+   /* animation: flash 1s ease 3;*/
+    animation: flash 1.5s ease-in-out 2;
 }
 
 @keyframes flash {
@@ -192,7 +193,7 @@ table {
     }
 
     100% {
-        background-color: white;
+        background-color: inherit;
     }
 }
 
