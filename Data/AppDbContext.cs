@@ -105,8 +105,32 @@ namespace UPHC.SurveillanceDashboard.Data
                 new Facility { Id = 23, FacilityName = "Bharatpur UPHC", Type = FacilityType.UPHC, FacilityAddress = "Bharatpur Slum,Mahalaxmi Vihar" },
                 new Facility { Id = 24, FacilityName = "Patia UPHC", Type = FacilityType.UPHC, FacilityAddress = "Patia Village,Damana area" },
                 new Facility { Id = 25, FacilityName = "VSS Nagar UPHC", Type = FacilityType.UPHC, FacilityAddress = "VSS Nagar Housing Board area" },
-                new Facility { Id = 26, FacilityName = "Laxmisagar UPHC", Type = FacilityType.UPHC, FacilityAddress = "Laxmisagar Village area" }
-            );
+                new Facility { Id = 26, FacilityName = "Laxmisagar UPHC", Type = FacilityType.UPHC, FacilityAddress = "Laxmisagar Village area" },
+                 new Facility { Id = 27, FacilityName = "VSS Nagar UHWC", Type = FacilityType.UHWC, FacilityAddress = "Ward 12, near Kalyan Mandap" },
+    new Facility { Id = 28, FacilityName = "Niladri Vihar UHWC", Type = FacilityType.UHWC, FacilityAddress = "Ward 14, Sector 1" },
+    new Facility { Id = 29, FacilityName = "Samantarapur UHWC", Type = FacilityType.UHWC, FacilityAddress = "Ward 59, near Samantarapur Square" },
+    new Facility { Id = 30, FacilityName = "Aiginia UHWC", Type = FacilityType.UHWC, FacilityAddress = "Ward 49, Shreekhetra Vihar" },
+    new Facility { Id = 31, FacilityName = "Patrapada UHWC", Type = FacilityType.UHWC, FacilityAddress = "Ward 65, Kalinga Vihar K-9" },
+    new Facility { Id = 32, FacilityName = "Baramunda HB UHWC", Type = FacilityType.UHWC, FacilityAddress = "L170, Baramunda Housing Board Colony" },
+    new Facility { Id = 33, FacilityName = "Chakaisiani UHWC", Type = FacilityType.UHWC, FacilityAddress = "Satya Vihar, Ward 5" },
+    new Facility { Id = 34, FacilityName = "Acharya Vihar UHWC", Type = FacilityType.UHWC, FacilityAddress = "Acharya Vihar, Ward 27" },
+    new Facility { Id = 35, FacilityName = "Kalarahanga UHWC", Type = FacilityType.UHWC, FacilityAddress = "Kalarahanga, near KIIT area" },
+    new Facility { Id = 36, FacilityName = "Palasuni UHWC", Type = FacilityType.UHWC, FacilityAddress = "Sainik School Road, Ward 5" },
+    new Facility { Id = 37, FacilityName = "Subudhipur UHWC", Type = FacilityType.UHWC, FacilityAddress = "Subudhipur, Aiginia area" },
+    new Facility { Id = 38, FacilityName = "Badagada Sabarasahi UHWC", Type = FacilityType.UHWC, FacilityAddress = "Badagada Brit Colony" },
+    new Facility { Id = 39, FacilityName = "Hanspal UHWC", Type = FacilityType.UHWC, FacilityAddress = "Hanspal, Balianta area" },
+    new Facility { Id = 40, FacilityName = "Gadakana UHWC", Type = FacilityType.UHWC, FacilityAddress = "Gadakana area, Ward 9" },
+    new Facility { Id = 41, FacilityName = "Jharapada UHWC", Type = FacilityType.UHWC, FacilityAddress = "Jharapada, near Jail area" },
+    new Facility { Id = 42, FacilityName = "Sailashree Vihar UHWC", Type = FacilityType.UHWC, FacilityAddress = "Sailashree Vihar, Ward 7" },
+    new Facility { Id = 43, FacilityName = "Unit-6 UHWC", Type = FacilityType.UHWC, FacilityAddress = "Unit-6 area, Ward 46" },
+    new Facility { Id = 44, FacilityName = "Dumuduma UHWC", Type = FacilityType.UHWC, FacilityAddress = "Dumuduma Housing Board Phase-III" }
+
+
+
+
+
+
+                );
         }
     }
 }
